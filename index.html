@@ -390,41 +390,6 @@
     </div>
     <div class="sidebar-section">Recent Questions</div>
     <div class="history-list" id="history-list">
-      <div class="hist-item active" onclick="loadHistory(0)">
-        <div class="hist-icon sci">🔬</div>
-        <div class="hist-text">
-          <div class="hist-q">Photosynthesis ka process explain karo</div>
-          <div class="hist-meta">Science • Aaj</div>
-        </div>
-      </div>
-      <div class="hist-item" onclick="loadHistory(1)">
-        <div class="hist-icon chem">⚗️</div>
-        <div class="hist-text">
-          <div class="hist-q">Electrolysis reaction kya hoti hai</div>
-          <div class="hist-meta">Chemistry • Kal</div>
-        </div>
-      </div>
-      <div class="hist-item" onclick="loadHistory(2)">
-        <div class="hist-icon math">📐</div>
-        <div class="hist-text">
-          <div class="hist-q">Pythagoras theorem numericals</div>
-          <div class="hist-meta">Mathematics • 2 din pehle</div>
-        </div>
-      </div>
-      <div class="hist-item" onclick="loadHistory(3)">
-        <div class="hist-icon phys">⚡</div>
-        <div class="hist-text">
-          <div class="hist-q">Ohm's Law ke numericals solve karo</div>
-          <div class="hist-meta">Physics • 3 din pehle</div>
-        </div>
-      </div>
-      <div class="hist-item" onclick="loadHistory(4)">
-        <div class="hist-icon eng">📖</div>
-        <div class="hist-text">
-          <div class="hist-q">Letter writing format NIOS</div>
-          <div class="hist-meta">English • 1 hafte pehle</div>
-        </div>
-      </div>
     </div>
     <div class="sidebar-footer">
       <div class="user-card">
@@ -589,6 +554,8 @@ let currentAI = "gemini";  // default free AI
 let pendingImages = [];
 let chatHistory = [];
 let conversation = [];  // ek chat ka poora context (AI yaad rakhega), New Chat pe clear
+let sessions = [];        // saari chats (history) — har ek mein messages + context
+let currentSessionId = null;
 
 // ═══ LOGIN ═══
 async function doLogin(){
@@ -638,7 +605,8 @@ document.getElementById('inp-phone').addEventListener('keydown',e=>{if(e.key==='
 document.getElementById('inp-name').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
 function doLogout(){
-  currentUser=null;chatHistory=[];pendingImages=[];conversation=[];
+  currentUser=null;chatHistory=[];pendingImages=[];conversation=[];sessions=[];currentSessionId=null;
+  const hl=document.getElementById('history-list'); if(hl)hl.innerHTML='';
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('app').style.display='none';
   document.getElementById('inp-name').value='';
@@ -838,6 +806,8 @@ function quickAsk(text){
 function newChat(){
   closeSidebar();
   chatHistory=[];pendingImages=[];conversation=[];
+  currentSessionId=null;   // naya session pehle question pe banega
+  document.querySelectorAll('.hist-item').forEach(el=>el.classList.remove('active'));
   const area=document.getElementById('chat-area');
   area.innerHTML=`<div class="welcome" id="welcome-screen">
     <div class="welcome-mark">
@@ -854,9 +824,24 @@ function newChat(){
   </div>`;
 }
 
-function loadHistory(i){
+function openSession(id){
   closeSidebar();
-  document.querySelectorAll('.hist-item').forEach((el,idx)=>el.classList.toggle('active',idx===i));
+  const sess=sessions.find(s=>s.id===id);
+  if(!sess)return;
+  currentSessionId=id;
+  conversation=(sess.conv||[]).slice();
+  const area=document.getElementById('chat-area');
+  area.innerHTML=sess.messages.join('');
+  // math wapas render karo (kyunki innerHTML set kiya)
+  try{
+    if(window.renderMathInElement){
+      area.querySelectorAll('.ai-answer').forEach(el=>{
+        renderMathInElement(el,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false},{left:'$',right:'$',display:false}],ignoredTags:['script','noscript','style','textarea','pre','code','option'],throwOnError:false});
+      });
+    }
+  }catch(e){}
+  area.scrollTop=area.scrollHeight;
+  document.querySelectorAll('.hist-item').forEach(el=>el.classList.toggle('active',el.dataset.id===id));
 }
 
 // ═══ SUBJECT AUTO-DETECT (backend ka kaam — students ko nahi dikhta) ═══
@@ -899,6 +884,14 @@ async function sendDoubt(){
   userHTML+=`</div></div>`;
   area.innerHTML+=userHTML;
 
+  // Session banao (agar nayi chat hai) aur user message save karo
+  if(!currentSessionId){
+    currentSessionId='s'+Date.now();
+    sessions.unshift({id:currentSessionId, title:(text||'Image doubt').slice(0,40), subject:detectSubject(text||''), messages:[], conv:[]});
+  }
+  const sess=sessions.find(s=>s.id===currentSessionId);
+  if(sess) sess.messages.push(userHTML);
+
   const questionText=text||(pendingImages.length>0?'[Image uploaded]':'');
   const imgs=[...pendingImages];
   ta.value='';ta.style.height='auto';
@@ -925,16 +918,22 @@ async function sendDoubt(){
 
   document.getElementById(typId)?.remove();
   const aiId='a'+Date.now();
+  const answerHTML=renderAnswer(answer);
   const wrap=document.createElement('div');
   wrap.className='msg msg-ai';
   wrap.id=aiId;
   wrap.innerHTML='<div class="msg-ai-avatar"></div><div class="msg-ai-content"><div class="ai-name">MVS Educator</div><div class="ai-answer"></div></div>';
   area.appendChild(wrap);
   const contentEl=wrap.querySelector('.ai-answer');
-  typeOutHtml(contentEl, renderAnswer(answer), area);
+  typeOutHtml(contentEl, answerHTML, area);
 
-  // Add to history sidebar
-  addToHistory(questionText,detectedSubject);
+  // Session mein AI answer + context save karo, sidebar update karo
+  if(sess){
+    sess.messages.push('<div class="msg msg-ai"><div class="msg-ai-avatar"></div><div class="msg-ai-content"><div class="ai-name">MVS Educator</div><div class="ai-answer">'+answerHTML+'</div></div></div>');
+    sess.conv=conversation.slice();
+    sess.subject=detectedSubject;
+  }
+  renderHistory();
 }
 
 // ═══ TYPEWRITER ANIMATION (Claude-jaisa line-wise typing) ═══
@@ -1197,19 +1196,24 @@ function formatAnswerHtml(raw){
   return s;
 }
 
-// ═══ HISTORY ═══
-const subjectIcons={Mathematics:'📐 math',Science:'🔬 sci',Physics:'⚡ phys',Chemistry:'⚗️ chem',English:'📖 eng',All:'📚 sci'};
-function addToHistory(q,subj){
+// ═══ HISTORY (sidebar) ═══
+const subjectIcons={Mathematics:'📐 math',Science:'🔬 sci',Physics:'⚡ phys',Chemistry:'⚗️ chem',Biology:'🔬 sci',English:'📖 eng',Hindi:'📖 eng','Social Science':'🌍 sci',Economics:'📊 math',All:'📚 sci'};
+function renderHistory(){
   const list=document.getElementById('history-list');
-  const icon=subjectIcons[subj]||'📚 sci';
-  const [ico,cls]=icon.split(' ');
-  const item=document.createElement('div');
-  item.className='hist-item';
-  item.innerHTML=`<div class="hist-icon ${cls}">${ico}</div><div class="hist-text"><div class="hist-q">${escHtml(q.slice(0,40))}${q.length>40?'...':''}</div><div class="hist-meta">${subj} • Abhi</div></div>`;
-  list.insertBefore(item,list.firstChild);
-  document.querySelectorAll('.hist-item').forEach(el=>el.classList.remove('active'));
-  item.classList.add('active');
+  if(!list)return;
+  list.innerHTML='';
+  sessions.forEach(s=>{
+    const icon=subjectIcons[s.subject]||'📚 sci';
+    const [ico,cls]=icon.split(' ');
+    const item=document.createElement('div');
+    item.className='hist-item'+(s.id===currentSessionId?' active':'');
+    item.dataset.id=s.id;
+    item.onclick=()=>openSession(s.id);
+    item.innerHTML=`<div class="hist-icon ${cls}">${ico}</div><div class="hist-text"><div class="hist-q">${escHtml(s.title)}${s.title.length>=40?'...':''}</div><div class="hist-meta">${s.subject}</div></div>`;
+    list.appendChild(item);
+  });
 }
+
 </script>
 </body>
 </html>
