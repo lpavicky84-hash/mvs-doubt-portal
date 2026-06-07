@@ -861,7 +861,10 @@ function detectSubject(text){
     Biology:['photosynthesis','cell ','plant','animal','digestion','respiration','reproduction','tissue','organ','blood','heart','neuron','dna','gene','ecosystem','nutrition','bacteria','virus','प्रकाश संश्लेषण','कोशिका','पाचन','श्वसन','रक्त','पोषण','जीव'],
     Physics:['force','newton','ohm','voltage','velocity','acceleration','friction','momentum','circuit','resistance','reflection','refraction','lens','mirror','magnet','electric','बल','विद्युत','चुंबक','दर्पण','लेंस'],
     'Social Science':['monsoon','climate','rainfall','trough','plateau','latitude','longitude','river','mountain','geography','history','civics','democracy','constitution','revolution','panchayat','parliament','independence','मानसून','जलवायु','भूगोल','इतिहास','नदी','संविधान','लोकतंत्र','स्वतंत्रता','क्रांति'],
-    Economics:['demand','supply','gdp','economy','inflation','budget','market price','trade','अर्थव्यवस्था','मांग','आपूर्ति','मुद्रास्फीति','बजट'],
+    Economics:['demand','supply','gdp','national income','inflation','market price','अर्थव्यवस्था','मांग','आपूर्ति','मुद्रास्फीति'],
+    'Business Studies':['business','marketing','management','entrepreneur','partnership','sole proprietor','organisation','organization','advertising','consumer','company formation','share capital','व्यवसाय','प्रबंधन','विपणन','साझेदारी'],
+    Accountancy:['accountancy','accounting','journal entry','ledger','balance sheet','trial balance','depreciation','debit','credit','bookkeeping','financial statement','खाता','लेखांकन','बहीखाता'],
+    'Computer Science':['computer','programming','algorithm','python','java','html','css ','database','software','hardware','operating system','spreadsheet','कंप्यूटर','प्रोग्रामिंग','सॉफ्टवेयर'],
     English:['letter','essay','grammar','paragraph','comprehension','tense','noun','verb','adjective','preposition','writing format','application','synonym','antonym','translate'],
     Hindi:['व्याकरण','निबंध','पत्र','संज्ञा','सर्वनाम','विशेषण','मुहावरा','समास','अनुच्छेद'],
     Mathematics:['theorem','equation','algebra','geometry','pythagoras','trigonometry','quadratic','polynomial','percentage','percent','ratio','proportion','simplify','factorise','factorize','area of','volume of','perimeter','circumference','radius','diameter','probability','lcm','hcf','square root','numerical','solve for','find x','value of x','ka maan','गणित','हल करो','क्षेत्रफल','समीकरण','बीजगणित','ज्यामिति','त्रिभुज','भिन्न','प्रतिशत','अनुपात']
@@ -871,12 +874,13 @@ function detectSubject(text){
   }
   // Maths expression (numbers + operators) — jaise "2x+3=7", "15% of 200", "√64"
   if(/\d\s*[+\-*/×÷=^]\s*\d/.test(t) || /[√∫∑π]/.test(t) || /\d+\s*%/.test(t) || /\bx\s*=/.test(t)) return 'Mathematics';
-  return 'Science';
+  return 'General';
 }
-// Subject-wise theme (Science=teal, Languages=amber, CS=green)
+// Subject-wise theme (Science=teal, Languages=amber, CS=green). General = no badge.
 function subjectTheme(subj){
+  if(subj==='General'||!subj) return {cls:'subj-sci', label:''};
   if(subj==='English'||subj==='Hindi') return {cls:'subj-lang', label:subj};
-  if(subj==='Computer Science'||subj==='Computer') return {cls:'subj-cs', label:subj};
+  if(subj==='Computer Science') return {cls:'subj-cs', label:subj};
   return {cls:'subj-sci', label:subj};
 }
 
@@ -937,7 +941,7 @@ async function sendDoubt(){
   const aiId='a'+Date.now();
   const answerHTML=renderAnswer(answer);
   const theme=subjectTheme(detectedSubject);
-  const nameLine='<div class="ai-name">MVS Educator <span class="subj-badge">'+escHtml(theme.label)+'</span></div>';
+  const nameLine='<div class="ai-name">MVS Educator'+(theme.label?' <span class="subj-badge">'+escHtml(theme.label)+'</span>':'')+'</div>';
   const wrap=document.createElement('div');
   wrap.className='msg msg-ai '+theme.cls;
   wrap.id=aiId;
