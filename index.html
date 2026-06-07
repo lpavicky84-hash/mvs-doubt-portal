@@ -185,6 +185,10 @@
   .ai-answer h3,.ai-answer h4{font-family:var(--font-display);font-size:15px;color:var(--text-primary);margin:14px 0 8px;font-weight:600;}
   .ai-answer sub{font-size:0.72em;vertical-align:-0.25em;}
   .ai-answer sup{font-size:0.72em;vertical-align:0.4em;}
+  /* ── Inline code chips + code blocks (Claude jaisa) ── */
+  .ai-answer code{font-family:ui-monospace,'Courier New',monospace;font-size:0.86em;background:rgba(255,120,110,0.1);border:1px solid rgba(255,120,110,0.2);color:#ffb0a3;padding:1.5px 6px;border-radius:5px;white-space:nowrap;}
+  .ai-answer pre{background:#0a0e18;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:12px 0;overflow-x:auto;}
+  .ai-answer pre code{background:none;border:none;color:#cfe0ff;padding:0;font-size:13px;line-height:1.75;display:block;white-space:pre;}
   /* ── Chemistry reaction box ── */
   .ai-answer .rxn{background:rgba(79,142,247,0.06);border:1px solid rgba(79,142,247,0.18);border-radius:10px;padding:14px 18px;margin:12px 0;text-align:center;font-size:16px;letter-spacing:0.03em;color:#dbe7ff;}
   .ai-answer .rxn .arrow{color:var(--accent3);margin:0 6px;font-weight:600;}
@@ -952,6 +956,7 @@ function typeOutHtml(container, html, scrollArea){
               {left:'\\(',right:'\\)',display:false},
               {left:'$',right:'$',display:false}
             ],
+            ignoredTags:['script','noscript','style','textarea','pre','code','option'],
             throwOnError:false
           });
         }
@@ -1068,7 +1073,7 @@ function getDemoAnswer(q,subject,lang,marks){
 
 // ═══ RENDER ANSWER ═══
 function renderAnswer(ans){
-  if(typeof ans==='string')return ans;  // backend HTML as-is
+  if(typeof ans==='string')return formatAnswerHtml(ans);  // backend HTML + code formatting
   let html='';
   if(ans.heading){html+=`<div class="answer-heading">${ans.heading}</div>`;}
 
@@ -1102,6 +1107,20 @@ function renderAnswer(ans){
 }
 
 function escHtml(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// AI agar markdown backticks bheje to unhe neat code-chips/blocks mein badlo (Claude jaisa)
+function formatAnswerHtml(s){
+  if(!s) return '';
+  // Code blocks: ```lang\n...\n```
+  s = s.replace(/```[a-zA-Z0-9+#]*\n?([\s\S]*?)```/g, function(_, code){
+    return '<pre><code>'+escHtml(code.replace(/\n+$/,''))+'</code></pre>';
+  });
+  // Inline code: `...`
+  s = s.replace(/`([^`\n]+)`/g, function(_, code){
+    return '<code>'+escHtml(code)+'</code>';
+  });
+  return s;
+}
 
 // ═══ HISTORY ═══
 const subjectIcons={Mathematics:'📐 math',Science:'🔬 sci',Physics:'⚡ phys',Chemistry:'⚗️ chem',English:'📖 eng',All:'📚 sci'};
