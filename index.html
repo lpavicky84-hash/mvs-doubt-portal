@@ -247,9 +247,10 @@
   .attach-desc{font-size:11px;color:var(--text-muted);margin-top:1px;}
   /* ── MARKS ── */
   .marks-row{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
-  .input-hint{font-size:11px;color:var(--text-muted);margin-left:auto;text-align:right;}
+  .input-hint{font-size:11px;color:var(--text-muted);text-align:left;}
   /* ── AI SELECTOR ── */
-  .ai-dropdown{position:relative;flex-shrink:0;}
+  /* AI selector students ko nahi dikhega (backend mein AI chalega). Wapas dikhana ho toh 'display:none' hata do. */
+  .ai-dropdown{position:relative;flex-shrink:0;display:none;}
   .ai-trigger{display:flex;align-items:center;gap:7px;background:var(--bg-card-hover);border:1px solid var(--border);border-radius:18px;padding:5px 10px 5px 11px;color:var(--text-primary);font-family:var(--font-body);font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;}
   .ai-trigger:hover{border-color:var(--border-accent);}
   .ai-trigger.open{border-color:var(--accent);}
@@ -277,6 +278,16 @@
   .drop-overlay.active{display:flex;}
 
   /* ── HIDDEN FILE INPUT ── */
+  /* ── IMAGE LIGHTBOX (click to enlarge) ── */
+  .msg-user-bubble img{cursor:zoom-in;transition:opacity 0.15s;}
+  .msg-user-bubble img:hover{opacity:0.88;}
+  #lightbox{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.88);display:none;align-items:center;justify-content:center;padding:30px;cursor:zoom-out;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+  #lightbox.show{display:flex;}
+  #lightbox img{max-width:92%;max-height:88%;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.6);object-fit:contain;}
+  #lightbox .lb-close{position:absolute;top:20px;right:24px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  #lightbox .lb-close:hover{background:rgba(255,255,255,0.22);}
+  #lightbox .lb-hint{position:absolute;bottom:24px;left:0;right:0;text-align:center;color:rgba(255,255,255,0.6);font-size:12px;}
+
   #file-input,#cam-input{display:none;}
 
   /* ════════ MOBILE RESPONSIVE ════════ */
@@ -537,6 +548,13 @@
 <input type="file" id="file-input" accept="image/*" multiple onchange="handleFileSelect(event)">
 <input type="file" id="cam-input" accept="image/*" capture="environment" onchange="handleFileSelect(event)">
 
+<!-- Image lightbox (click image to enlarge) -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button class="lb-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="enlarged">
+  <div class="lb-hint">Kahin bhi tap karo band karne ke liye · Image pe right-click se save/copy kar sakte ho</div>
+</div>
+
 <script>
 // ═══ DEMO DATA ═══
 const DEMO_STUDENTS = [
@@ -554,6 +572,7 @@ let currentLang = "hindi";
 let currentAI = "gemini";  // default free AI
 let pendingImages = [];
 let chatHistory = [];
+let conversation = [];  // ek chat ka poora context (AI yaad rakhega), New Chat pe clear
 
 // ═══ LOGIN ═══
 async function doLogin(){
@@ -603,7 +622,7 @@ document.getElementById('inp-phone').addEventListener('keydown',e=>{if(e.key==='
 document.getElementById('inp-name').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
 function doLogout(){
-  currentUser=null;chatHistory=[];pendingImages=[];
+  currentUser=null;chatHistory=[];pendingImages=[];conversation=[];
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('app').style.display='none';
   document.getElementById('inp-name').value='';
@@ -657,6 +676,20 @@ function detectMarks(text){
 // ═══ ATTACH (+) MENU ═══
 // ═══ SIDEBAR TOGGLE (mobile drawer + desktop collapse) ═══
 function isMobileView(){return window.innerWidth<=820;}
+// ═══ IMAGE LIGHTBOX (click to enlarge) ═══
+function openLightbox(src){
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('show');
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('show');
+}
+// Chat ki kisi bhi image pe click → bada dikhao
+document.addEventListener('click', e=>{
+  const img = e.target.closest('.msg-user-bubble img, .ai-answer img');
+  if(img){ e.stopPropagation(); openLightbox(img.src); }
+});
+
 // ═══ AI SELECTOR DROPDOWN ═══
 const AI_INFO={
   gemini:{label:'Gemini',cls:'gem'},
@@ -788,7 +821,7 @@ function quickAsk(text){
 // ═══ NEW CHAT ═══
 function newChat(){
   closeSidebar();
-  chatHistory=[];pendingImages=[];
+  chatHistory=[];pendingImages=[];conversation=[];
   const area=document.getElementById('chat-area');
   area.innerHTML=`<div class="welcome" id="welcome-screen">
     <div class="welcome-mark">
@@ -868,7 +901,11 @@ async function sendDoubt(){
   // Backend khud subject aur marks detect karega (students ko nahi dikhega)
   detectedSubject = detectSubject(questionText);
   detectedMarks = detectMarks(questionText);
-  const answer=await callAI(questionText,imgs,detectedSubject,currentLang,detectedMarks,currentAI);
+  const answer=await callAI(questionText,imgs,detectedSubject,currentLang,detectedMarks,currentAI,conversation);
+  // Is chat ke context mein save karo (AI agle sawaal mein yaad rakhega)
+  conversation.push({role:'user', text:questionText});
+  conversation.push({role:'model', text: (typeof answer==='string'? answer : '')});
+  if(conversation.length>30) conversation=conversation.slice(-30);  // memory limit
 
   document.getElementById(typId)?.remove();
   const aiId='a'+Date.now();
@@ -941,7 +978,7 @@ function typeOutHtml(container, html, scrollArea){
 // ════════════════════════════════════════════════
 const BACKEND_URL = "https://script.google.com/macros/s/AKfycbyLzJ4GT5TAzdwhGBjtcN4y_rs5C90SM3LONUVntXEfJ0dDbS2D-qNSctlQMDHyFFwSeg/exec";  // <-- Live backend connected
 
-async function callAI(question, images, subject, lang, marks, ai){
+async function callAI(question, images, subject, lang, marks, ai, history){
   // Agar backend URL set hai toh real AI call karo
   if(BACKEND_URL){
     try{
@@ -956,6 +993,7 @@ async function callAI(question, images, subject, lang, marks, ai){
           subject: subject,
           lang: lang,
           marks: marks,
+          history: history || [],  // is chat ka pichhla context
           name: currentUser?.name || "",
           phone: currentUser?.phone || ""
         })
