@@ -229,8 +229,9 @@
   .type-cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:1px;vertical-align:text-bottom;animation:caretBlink 0.8s step-end infinite;}
   @keyframes caretBlink{0%,100%{opacity:1;}50%{opacity:0;}}
 
-  /* ── IMAGE PREVIEW ── */
+  /* ── IMAGE PREVIEW (input box ke andar, Gemini jaisa) ── */
   .img-preview-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+  .img-preview-wrap:empty{display:none;margin:0;}
   .img-preview{position:relative;width:70px;height:70px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
   .img-preview img{width:100%;height:100%;object-fit:cover;}
   .img-remove{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.7);border:none;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
@@ -464,9 +465,9 @@
 
     <!-- INPUT -->
     <div class="input-area">
-      <div id="img-previews" class="img-preview-wrap"></div>
       <div class="input-box" id="input-box" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
         <div class="drop-overlay" id="drop-overlay">📎 Yahan drop karo!</div>
+        <div id="img-previews" class="img-preview-wrap"></div>
         <div class="input-main">
           <div class="attach-wrap" id="attach-wrap">
             <button class="plus-btn" id="plus-btn" onclick="toggleAttachMenu(event)" title="Attach">
