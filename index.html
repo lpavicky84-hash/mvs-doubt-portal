@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MVS Educator — NIOS Doubt Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
+<!-- KaTeX: maths equations + chemistry reactions (professional rendering) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/mhchem.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <style>
   :root {
     --bg-deep: #070b14;
@@ -167,6 +172,28 @@
   .msg-ai{display:flex;gap:12px;align-items:flex-start;}
   .msg-ai-avatar{width:36px;height:36px;border-radius:50%;background:var(--mvs-logo) center/cover no-repeat;flex-shrink:0;margin-top:2px;}
   .msg-ai-content{background:var(--bg-card);border:1px solid var(--border);border-radius:4px 18px 18px 18px;padding:16px 20px;max-width:80%;font-size:14px;line-height:1.8;color:var(--text-primary);}
+  /* ── MVS Educator name label ── */
+  .ai-name{font-family:var(--font-display);font-size:12px;font-weight:600;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:7px;letter-spacing:0.02em;}
+  .ai-name::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent3);box-shadow:0 0 8px var(--accent3);}
+  /* ── Clean answer typography (Claude-jaisa) ── */
+  .ai-answer{font-size:14.5px;line-height:1.85;}
+  .ai-answer strong{color:var(--accent);font-weight:600;}
+  .ai-answer ol,.ai-answer ul{margin:8px 0 8px 4px;padding-left:22px;display:flex;flex-direction:column;gap:9px;}
+  .ai-answer li{padding-left:4px;}
+  .ai-answer li::marker{color:var(--accent);font-weight:600;}
+  .ai-answer p{margin:8px 0;}
+  .ai-answer h3,.ai-answer h4{font-family:var(--font-display);font-size:15px;color:var(--text-primary);margin:14px 0 8px;font-weight:600;}
+  .ai-answer sub{font-size:0.72em;vertical-align:-0.25em;}
+  .ai-answer sup{font-size:0.72em;vertical-align:0.4em;}
+  /* ── Chemistry reaction box ── */
+  .ai-answer .rxn{background:rgba(79,142,247,0.06);border:1px solid rgba(79,142,247,0.18);border-radius:10px;padding:14px 18px;margin:12px 0;text-align:center;font-size:16px;letter-spacing:0.03em;color:#dbe7ff;}
+  .ai-answer .rxn .arrow{color:var(--accent3);margin:0 6px;font-weight:600;}
+  .ai-answer .rxn-cond{display:block;font-size:12px;color:var(--text-secondary);margin-top:8px;letter-spacing:0.02em;}
+  /* ── Numericals / formula box ── */
+  .ai-answer .calc{background:rgba(124,92,252,0.06);border:1px solid rgba(124,92,252,0.18);border-radius:10px;padding:12px 16px;margin:12px 0;font-family:'Courier New',monospace;font-size:13.5px;line-height:2;color:#cfd6ff;}
+  /* ── KaTeX math/chemistry spacing ── */
+  .ai-answer .katex{font-size:1.05em;}
+  .ai-answer .katex-display{margin:14px 0;padding:10px 14px;background:rgba(79,142,247,0.05);border:1px solid rgba(79,142,247,0.14);border-radius:10px;overflow-x:auto;overflow-y:hidden;}
   .msg-ai-content strong{color:var(--accent);font-weight:600;}
   .msg-ai-content .answer-block{margin-top:10px;}
   .answer-heading{font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--accent3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
@@ -486,6 +513,7 @@
                 <span class="ai-opt-main">Gemini <span class="ai-opt-tag free">Free</span></span>
                 <svg class="ai-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
               </div>
+              <!-- CLAUDE aur CHATGPT abhi chhupe hain. Jab keys lo, neeche ke comment markers hata dena.
               <div class="ai-option" data-ai="claude" onclick="pickAi('claude')">
                 <span class="ai-dot cla"></span>
                 <span class="ai-opt-main">Claude <span class="ai-opt-tag">Best format</span></span>
@@ -496,6 +524,7 @@
                 <span class="ai-opt-main">ChatGPT <span class="ai-opt-tag">Versatile</span></span>
                 <svg class="ai-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
               </div>
+              -->
             </div>
           </div>
           <span class="input-hint">📎 Drag &amp; drop ya Ctrl+V se image · Marks ke liye likho "ye 5 marks ka hai"</span>
@@ -846,9 +875,9 @@ async function sendDoubt(){
   const wrap=document.createElement('div');
   wrap.className='msg msg-ai';
   wrap.id=aiId;
-  wrap.innerHTML='<div class="msg-ai-avatar"></div><div class="msg-ai-content"></div>';
+  wrap.innerHTML='<div class="msg-ai-avatar"></div><div class="msg-ai-content"><div class="ai-name">MVS Educator</div><div class="ai-answer"></div></div>';
   area.appendChild(wrap);
-  const contentEl=wrap.querySelector('.msg-ai-content');
+  const contentEl=wrap.querySelector('.ai-answer');
   typeOutHtml(contentEl, renderAnswer(answer), area);
 
   // Add to history sidebar
@@ -876,6 +905,21 @@ function typeOutHtml(container, html, scrollArea){
   function step(){
     if(ni>=nodes.length){
       cursor.remove();
+      // Typing ke baad math + chemistry ko beautiful render karo
+      try{
+        if(window.renderMathInElement){
+          renderMathInElement(container,{
+            delimiters:[
+              {left:'$$',right:'$$',display:true},
+              {left:'\\[',right:'\\]',display:true},
+              {left:'\\(',right:'\\)',display:false},
+              {left:'$',right:'$',display:false}
+            ],
+            throwOnError:false
+          });
+        }
+      }catch(e){}
+      if(scrollArea) scrollArea.scrollTop=scrollArea.scrollHeight;
       return;
     }
     const full=fulls[ni];
@@ -986,7 +1030,7 @@ function getDemoAnswer(q,subject,lang,marks){
 
 // ═══ RENDER ANSWER ═══
 function renderAnswer(ans){
-  if(typeof ans==='string')return `<p>${ans}</p>`;
+  if(typeof ans==='string')return ans;  // backend HTML as-is
   let html='';
   if(ans.heading){html+=`<div class="answer-heading">${ans.heading}</div>`;}
 
