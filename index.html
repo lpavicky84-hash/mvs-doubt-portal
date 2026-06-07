@@ -198,6 +198,9 @@
   .ai-answer td{color:var(--text-secondary);}
   .ai-answer tbody tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
   .ai-answer em{font-style:italic;color:var(--text-secondary);}
+  /* ── Blockquote (Exam Tip / important note) ── */
+  .ai-answer blockquote{margin:14px 0;padding:12px 16px;background:rgba(245,200,66,0.07);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;color:var(--text-secondary);font-size:13.5px;line-height:1.7;}
+  .ai-answer blockquote strong{color:var(--gold);}
   /* ── Chemistry reaction box ── */
   .ai-answer .rxn{background:rgba(79,142,247,0.06);border:1px solid rgba(79,142,247,0.18);border-radius:10px;padding:14px 18px;margin:12px 0;text-align:center;font-size:16px;letter-spacing:0.03em;color:#dbe7ff;}
   .ai-answer .rxn .arrow{color:var(--accent3);margin:0 6px;font-weight:600;}
@@ -1162,6 +1165,12 @@ function formatAnswerHtml(raw){
     // HEADING
     let hm = line.match(/^(#{1,4})\s+(.+)$/);
     if(hm){ const tag = hm[1].length<=2?'h3':'h4'; out.push('<'+tag+'>'+inline(hm[2].trim())+'</'+tag+'>'); i++; continue; }
+    // BLOCKQUOTE (Exam Tip / important note)
+    if(/^\s*>\s?/.test(line)){
+      const items=[];
+      while(i<lines.length && /^\s*>\s?/.test(lines[i])){ items.push(lines[i].replace(/^\s*>\s?/,'')); i++; }
+      out.push('<blockquote>'+inline(items.join('<br>'))+'</blockquote>'); continue;
+    }
     // UNORDERED LIST
     if(/^\s*[-*]\s+/.test(line)){
       const items=[];
@@ -1178,7 +1187,7 @@ function formatAnswerHtml(raw){
     if(line.trim()===''){ i++; continue; }
     // PARAGRAPH
     const para=[line]; i++;
-    while(i<lines.length && lines[i].trim()!=='' && !/^\s*[-*]\s+/.test(lines[i]) && !/^\s*\d+\.\s+/.test(lines[i]) && !/^#{1,4}\s+/.test(lines[i]) && !(/\|/.test(lines[i]) && i+1<lines.length && isSep(lines[i+1]))){
+    while(i<lines.length && lines[i].trim()!=='' && !/^\s*[-*]\s+/.test(lines[i]) && !/^\s*\d+\.\s+/.test(lines[i]) && !/^#{1,4}\s+/.test(lines[i]) && !/^\s*>\s?/.test(lines[i]) && !(/\|/.test(lines[i]) && i+1<lines.length && isSep(lines[i+1]))){
       para.push(lines[i]); i++;
     }
     out.push('<p>'+inline(para.join(' '))+'</p>');
