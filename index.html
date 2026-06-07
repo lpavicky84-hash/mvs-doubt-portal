@@ -426,17 +426,17 @@
       <div class="topbar-right">
         <div class="lang-dropdown" id="lang-dropdown">
           <div class="lang-trigger" id="lang-trigger" onclick="toggleLangMenu(event)">
-            <span class="lang-flag hi" id="trig-flag">IN</span>
-            <span class="lang-label" id="trig-label">हिंदी</span>
+            <span class="lang-flag en" id="trig-flag">EN</span>
+            <span class="lang-label" id="trig-label">English</span>
             <svg class="lang-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
           </div>
           <div class="lang-menu" id="lang-menu">
-            <div class="lang-option selected" data-lang="hindi" onclick="pickLang('hindi')">
+            <div class="lang-option" data-lang="hindi" onclick="pickLang('hindi')">
               <span class="lang-flag hi">IN</span>
               <span class="opt-main">हिंदी <span class="opt-desc">Hindi</span></span>
               <svg class="opt-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
             </div>
-            <div class="lang-option" data-lang="english" onclick="pickLang('english')">
+            <div class="lang-option selected" data-lang="english" onclick="pickLang('english')">
               <span class="lang-flag en">EN</span>
               <span class="opt-main">English <span class="opt-desc">Angrezi</span></span>
               <svg class="opt-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
@@ -557,7 +557,7 @@ const DEMO_STUDENTS = [
 let currentUser = null;
 let detectedMarks = null;  // backend khud question se nikalega
 let detectedSubject = "General";  // backend khud detect karega, students ko nahi dikhega
-let currentLang = "hindi";
+let currentLang = "english";
 let currentAI = "gemini";  // default free AI
 let pendingImages = [];
 let chatHistory = [];
@@ -855,21 +855,22 @@ function openSession(id){
 // ═══ SUBJECT AUTO-DETECT (backend ka kaam — students ko nahi dikhta) ═══
 function detectSubject(text){
   const t=(text||'').toLowerCase();
+  // Order maayne rakhta hai — content subjects pehle, Maths last (generic words se clash na ho)
   const map={
-    Chemistry:['reaction','electrolysis','acid','base','salt','atom','molecule','periodic','compound','element','oxidation','reduction','valency','bond','mole','ph ','इलेक्ट्रोलिसिस','अभिक्रिया','अम्ल','क्षार','तत्व','यौगिक','अणु','परमाणु'],
-    Physics:['force','motion','newton','ohm','current','voltage','velocity','acceleration','energy','power','gravity','friction','momentum','pressure','wave','sound','light','reflection','refraction','lens','mirror','circuit','resistance','बल','गति','विद्युत','ऊर्जा','प्रकाश','ध्वनि','दर्पण','लेंस'],
-    Mathematics:['math','maths','theorem','equation','numerical','triangle','algebra','geometry','pythagoras','trigonometry','solve','simplify','factorise','factorize','calculate','find x','find the value','value of','quadratic','polynomial','linear','fraction','percentage','percent','ratio','proportion','area','volume','perimeter','circumference','radius','diameter','angle','probability','mean','median','mode','average','integer','divisible','multiple','factor','lcm','hcf','square root','cube','sin','cos','tan','ka maan','maan nikal','maan gyat','maan ज्ञात','गणित','हल करो','मान ज्ञात','क्षेत्रफल','आयतन','कोण','भिन्न','प्रतिशत','समीकरण','बीजगणित','ज्यामिति','त्रिभुज','वृत्त','अनुपात'],
-    Biology:['photosynthesis','cell','plant','animal','digestion','respiration','reproduction','tissue','organ','blood','heart','neuron','dna','gene','ecosystem','nutrition','प्रकाश संश्लेषण','कोशिका','पाचन','श्वसन','रक्त','हृदय','पोषण'],
-    English:['letter','essay','grammar','paragraph','comprehension','tense','noun','verb','adjective','preposition','writing format','application','story','poem','synonym','antonym'],
-    Hindi:['व्याकरण','निबंध','पत्र','संज्ञा','क्रिया','समास','सर्वनाम','विशेषण','मुहावरा','कविता','कहानी','अनुच्छेद'],
-    'Social Science':['history','geography','civics','democracy','constitution','revolution','political','economics of','map of','river','mountain','इतिहास','भूगोल','नागरिक','लोकतंत्र','संविधान','क्रांति'],
-    Economics:['demand','supply','gdp','market','economy','inflation','budget','tax','trade','अर्थव्यवस्था','मांग','आपूर्ति','मुद्रास्फीति','बजट']
+    Chemistry:['reaction','electrolysis','acid','base ','salt','periodic','compound','oxidation','reduction','valency','chemical','mole ','इलेक्ट्रोलिसिस','अभिक्रिया','अम्ल','क्षार','यौगिक','रासायनिक'],
+    Biology:['photosynthesis','cell ','plant','animal','digestion','respiration','reproduction','tissue','organ','blood','heart','neuron','dna','gene','ecosystem','nutrition','bacteria','virus','प्रकाश संश्लेषण','कोशिका','पाचन','श्वसन','रक्त','पोषण','जीव'],
+    Physics:['force','newton','ohm','voltage','velocity','acceleration','friction','momentum','circuit','resistance','reflection','refraction','lens','mirror','magnet','electric','बल','विद्युत','चुंबक','दर्पण','लेंस'],
+    'Social Science':['monsoon','climate','rainfall','trough','plateau','latitude','longitude','river','mountain','geography','history','civics','democracy','constitution','revolution','panchayat','parliament','independence','मानसून','जलवायु','भूगोल','इतिहास','नदी','संविधान','लोकतंत्र','स्वतंत्रता','क्रांति'],
+    Economics:['demand','supply','gdp','economy','inflation','budget','market price','trade','अर्थव्यवस्था','मांग','आपूर्ति','मुद्रास्फीति','बजट'],
+    English:['letter','essay','grammar','paragraph','comprehension','tense','noun','verb','adjective','preposition','writing format','application','synonym','antonym','translate'],
+    Hindi:['व्याकरण','निबंध','पत्र','संज्ञा','सर्वनाम','विशेषण','मुहावरा','समास','अनुच्छेद'],
+    Mathematics:['theorem','equation','algebra','geometry','pythagoras','trigonometry','quadratic','polynomial','percentage','percent','ratio','proportion','simplify','factorise','factorize','area of','volume of','perimeter','circumference','radius','diameter','probability','lcm','hcf','square root','numerical','solve for','find x','value of x','ka maan','गणित','हल करो','क्षेत्रफल','समीकरण','बीजगणित','ज्यामिति','त्रिभुज','भिन्न','प्रतिशत','अनुपात']
   };
   for(const [subj,keys] of Object.entries(map)){
     if(keys.some(k=>t.includes(k)))return subj;
   }
   // Maths expression (numbers + operators) — jaise "2x+3=7", "15% of 200", "√64"
-  if(/\d\s*[+\-*/×÷=%^]\s*\d/.test(t) || /[√∫∑πθ]/.test(t) || /\bx\s*[=+\-]/.test(t) || /\d+\s*%/.test(t)) return 'Mathematics';
+  if(/\d\s*[+\-*/×÷=^]\s*\d/.test(t) || /[√∫∑π]/.test(t) || /\d+\s*%/.test(t) || /\bx\s*=/.test(t)) return 'Mathematics';
   return 'Science';
 }
 // Subject-wise theme (Science=teal, Languages=amber, CS=green)
