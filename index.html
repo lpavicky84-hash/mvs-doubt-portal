@@ -856,18 +856,20 @@ function openSession(id){
 function detectSubject(text){
   const t=(text||'').toLowerCase();
   const map={
-    Chemistry:['reaction','electrolysis','acid','base','salt','atom','molecule','periodic','compound','element','oxidation','इलेक्ट्रोलिसिस','अभिक्रिया','अम्ल'],
-    Physics:['force','motion','newton','ohm','current','voltage','velocity','acceleration','energy','power','gravity','बल','गति','विद्युत'],
-    Mathematics:['theorem','equation','numerical','triangle','algebra','geometry','pythagoras','solve for','calculate','square','समीकरण','त्रिभुज'],
-    Biology:['photosynthesis','cell','plant','animal','digestion','respiration','reproduction','tissue','organ','प्रकाश संश्लेषण','कोशिका'],
-    English:['letter','essay','grammar','paragraph','comprehension','tense','noun','verb','writing format'],
-    Hindi:['व्याकरण','निबंध','पत्र','संज्ञा','क्रिया','समास'],
-    'Social Science':['history','geography','civics','democracy','constitution','revolution','इतिहास','भूगोल'],
-    Economics:['demand','supply','gdp','market','economy','inflation','अर्थव्यवस्था','मांग']
+    Chemistry:['reaction','electrolysis','acid','base','salt','atom','molecule','periodic','compound','element','oxidation','reduction','valency','bond','mole','ph ','इलेक्ट्रोलिसिस','अभिक्रिया','अम्ल','क्षार','तत्व','यौगिक','अणु','परमाणु'],
+    Physics:['force','motion','newton','ohm','current','voltage','velocity','acceleration','energy','power','gravity','friction','momentum','pressure','wave','sound','light','reflection','refraction','lens','mirror','circuit','resistance','बल','गति','विद्युत','ऊर्जा','प्रकाश','ध्वनि','दर्पण','लेंस'],
+    Mathematics:['math','maths','theorem','equation','numerical','triangle','algebra','geometry','pythagoras','trigonometry','solve','simplify','factorise','factorize','calculate','find x','find the value','value of','quadratic','polynomial','linear','fraction','percentage','percent','ratio','proportion','area','volume','perimeter','circumference','radius','diameter','angle','probability','mean','median','mode','average','integer','divisible','multiple','factor','lcm','hcf','square root','cube','sin','cos','tan','ka maan','maan nikal','maan gyat','maan ज्ञात','गणित','हल करो','मान ज्ञात','क्षेत्रफल','आयतन','कोण','भिन्न','प्रतिशत','समीकरण','बीजगणित','ज्यामिति','त्रिभुज','वृत्त','अनुपात'],
+    Biology:['photosynthesis','cell','plant','animal','digestion','respiration','reproduction','tissue','organ','blood','heart','neuron','dna','gene','ecosystem','nutrition','प्रकाश संश्लेषण','कोशिका','पाचन','श्वसन','रक्त','हृदय','पोषण'],
+    English:['letter','essay','grammar','paragraph','comprehension','tense','noun','verb','adjective','preposition','writing format','application','story','poem','synonym','antonym'],
+    Hindi:['व्याकरण','निबंध','पत्र','संज्ञा','क्रिया','समास','सर्वनाम','विशेषण','मुहावरा','कविता','कहानी','अनुच्छेद'],
+    'Social Science':['history','geography','civics','democracy','constitution','revolution','political','economics of','map of','river','mountain','इतिहास','भूगोल','नागरिक','लोकतंत्र','संविधान','क्रांति'],
+    Economics:['demand','supply','gdp','market','economy','inflation','budget','tax','trade','अर्थव्यवस्था','मांग','आपूर्ति','मुद्रास्फीति','बजट']
   };
   for(const [subj,keys] of Object.entries(map)){
     if(keys.some(k=>t.includes(k)))return subj;
   }
+  // Maths expression (numbers + operators) — jaise "2x+3=7", "15% of 200", "√64"
+  if(/\d\s*[+\-*/×÷=%^]\s*\d/.test(t) || /[√∫∑πθ]/.test(t) || /\bx\s*[=+\-]/.test(t) || /\d+\s*%/.test(t)) return 'Mathematics';
   return 'Science';
 }
 // Subject-wise theme (Science=teal, Languages=amber, CS=green)
